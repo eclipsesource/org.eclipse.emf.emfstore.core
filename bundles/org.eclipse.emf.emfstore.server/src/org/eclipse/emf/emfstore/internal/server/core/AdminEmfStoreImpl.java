@@ -568,22 +568,16 @@ public class AdminEmfStoreImpl extends AbstractEmfstoreInterface implements Admi
 
 		final ProjectId resolvedProjectId = getProjectId(projectId);
 		final ACOrgUnit<?> orgUnit = getOrgUnit(orgUnitId);
-		final Role role = getRole(resolvedProjectId, orgUnit);
+
+		// if user was server admin, remove this role
+		// there may be more roles for this project, e.g. ProjectAdmin in case the project
+		// was created by this user
+		final Role serverAdminRole = getServerAdminRole(orgUnit);
+		removeRole(isServerAdmin, resolvedProjectId, orgUnit, serverAdminRole);
 
 		// remove old role first
-		if (role != null) {
-
-			if (!isServerAdmin && role.canAdministrate(resolvedProjectId)) {
-				throw new AccessControlException(
-					Messages.AdminEmfStoreImpl_RemovePA_Violation_1
-						+ Messages.AdminEmfStoreImpl_RemovePA_Violation_2);
-			}
-
-			role.getProjects().remove(resolvedProjectId);
-			if (role.getProjects().isEmpty()) {
-				orgUnit.getRoles().remove(role);
-			}
-		}
+		final Role role = getProjectRole(resolvedProjectId, orgUnit);
+		removeRole(isServerAdmin, resolvedProjectId, orgUnit, role);
 
 		if (isServerAdminRole(roleClass)) {
 			orgUnit.getRoles().add(RolesFactory.eINSTANCE.createServerAdmin());
@@ -606,6 +600,23 @@ public class AdminEmfStoreImpl extends AbstractEmfstoreInterface implements Admi
 		newRole.getProjects().add(ModelUtil.clone(resolvedProjectId));
 		orgUnit.getRoles().add(newRole);
 		save();
+	}
+
+	protected void removeRole(final boolean isServerAdmin, final ProjectId resolvedProjectId,
+		final ACOrgUnit<?> orgUnit, final Role role) throws AccessControlException {
+		if (role != null) {
+
+			if (!isServerAdmin && role.canAdministrate(resolvedProjectId)) {
+				throw new AccessControlException(
+					Messages.AdminEmfStoreImpl_RemovePA_Violation_1
+						+ Messages.AdminEmfStoreImpl_RemovePA_Violation_2);
+			}
+
+			role.getProjects().remove(resolvedProjectId);
+			if (role.getProjects().isEmpty()) {
+				orgUnit.getRoles().remove(role);
+			}
+		}
 	}
 
 	/**
@@ -963,11 +974,20 @@ public class AdminEmfStoreImpl extends AbstractEmfstoreInterface implements Admi
 		throw new ESException(Messages.AdminEmfStoreImpl_OrgUnit_Does_Not_Exist);
 	}
 
-	private Role getRole(ProjectId projectId, ACOrgUnit<?> orgUnit) {
+	private Role getServerAdminRole(ACOrgUnit<?> orgUnit) {
 		final List<Role> roles = orgUnit.getRoles();
 		for (final Role role : roles) {
-			if (isServerAdmin(role) || role.getProjects().contains(projectId)) {
-				// return (Role) ModelUtil.clone(role);
+			if (isServerAdmin(role)) {
+				return role;
+			}
+		}
+		return null;
+	}
+
+	private Role getProjectRole(ProjectId projectId, ACOrgUnit<?> orgUnit) {
+		final List<Role> roles = orgUnit.getRoles();
+		for (final Role role : roles) {
+			if (role.getProjects().contains(projectId)) {
 				return role;
 			}
 		}

@@ -44,7 +44,8 @@ import org.junit.runners.Suite;
 	AddInitialParticipantTest.class,
 	AutoCreateACUserTestTest.class,
 	DefaultESPasswordHashGeneratorTests.class,
-	DefaultESAuthorizationServiceTests.class
+	DefaultESAuthorizationServiceTests.class,
+	ChangeRoleTest.class
 
 })
 public class AllAccessControlTests {

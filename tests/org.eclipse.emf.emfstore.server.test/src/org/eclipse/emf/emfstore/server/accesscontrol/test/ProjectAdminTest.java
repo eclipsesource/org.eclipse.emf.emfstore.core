@@ -179,6 +179,10 @@ public class ProjectAdminTest extends ESTestWithLoggedInUserMock {
 		// getUsersession().refresh();
 	}
 
+	public static boolean hasServerAdminRole(ACOrgUnitId orgUnitId) throws ESException {
+		return hasRole(orgUnitId, Roles.serverAdmin());
+	}
+
 	public static boolean hasProjectAdminRole(ACOrgUnitId orgUnitId) throws ESException {
 		return hasRole(orgUnitId, Roles.projectAdmin());
 	}
