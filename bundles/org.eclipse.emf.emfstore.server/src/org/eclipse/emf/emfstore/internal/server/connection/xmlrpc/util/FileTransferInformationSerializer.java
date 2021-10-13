@@ -38,7 +38,16 @@ public class FileTransferInformationSerializer extends TypeSerializerImpl {
 			final OutputStream ostream = new EncoderOutputStream(encoder);
 			final ObjectOutputStream oos = new ObjectOutputStream(ostream);
 			oos.writeObject(pObject);
-			oos.close();
+			try {
+				oos.close();
+			} catch (final IOException ex) {
+				/* silent */
+			}
+			try {
+				ostream.close();
+			} catch (final IOException ex) {
+				/* silent */
+			}
 		} catch (final Base64.SAXIOException e) {
 			throw e.getSAXException();
 		} catch (final IOException e) {

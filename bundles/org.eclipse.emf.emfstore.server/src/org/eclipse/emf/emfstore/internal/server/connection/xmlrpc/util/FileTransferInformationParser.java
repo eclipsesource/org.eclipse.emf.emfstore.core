@@ -44,7 +44,18 @@ public class FileTransferInformationParser extends ByteArrayParser {
 					throw new IllegalArgumentException("Deserialzation is not supported"); //$NON-NLS-1$
 				}
 			};
-			return ois.readObject();
+			final Object object = ois.readObject();
+			try {
+				ois.close();
+			} catch (final IOException ex) {
+				/* silent */
+			}
+			try {
+				bais.close();
+			} catch (final IOException ex) {
+				/* silent */
+			}
+			return object;
 		} catch (final IOException e) {
 			throw new XmlRpcException("Failed to read result object: " + e.getMessage(), e); //$NON-NLS-1$
 		} catch (final ClassNotFoundException e) {
