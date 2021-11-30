@@ -16,7 +16,9 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.eclipse.emf.emfstore.internal.common.model.Project;
 import org.eclipse.emf.emfstore.internal.common.model.util.ModelUtil;
@@ -32,8 +34,9 @@ import org.eclipse.emf.emfstore.internal.server.model.ProjectHistory;
 import org.eclipse.emf.emfstore.internal.server.model.ProjectId;
 import org.eclipse.emf.emfstore.internal.server.model.ProjectInfo;
 import org.eclipse.emf.emfstore.internal.server.model.SessionId;
+import org.eclipse.emf.emfstore.internal.server.model.accesscontrol.ACGroup;
+import org.eclipse.emf.emfstore.internal.server.model.accesscontrol.ACOrgUnit;
 import org.eclipse.emf.emfstore.internal.server.model.accesscontrol.ACUser;
-import org.eclipse.emf.emfstore.internal.server.model.accesscontrol.roles.ProjectAdminRole;
 import org.eclipse.emf.emfstore.internal.server.model.accesscontrol.roles.Role;
 import org.eclipse.emf.emfstore.internal.server.model.accesscontrol.roles.RolesPackage;
 import org.eclipse.emf.emfstore.internal.server.model.versioning.AbstractChangePackage;
@@ -47,6 +50,7 @@ import org.eclipse.emf.emfstore.server.auth.ESAuthorizationService;
 import org.eclipse.emf.emfstore.server.auth.ESMethod;
 import org.eclipse.emf.emfstore.server.auth.ESMethod.MethodId;
 import org.eclipse.emf.emfstore.server.exceptions.ESException;
+import org.eclipse.emf.emfstore.server.model.ESOrgUnit;
 
 /**
  * This sub-interface implements all project related functionality.
@@ -307,7 +311,8 @@ public class ProjectSubInterfaceImpl extends AbstractSubEmfstoreInterface {
 			try {
 				final ProjectHistory project = getProject(projectId);
 				getServerSpace().getProjects().remove(project);
-				removeAllProjectAdmins(projectId);
+				removeAllUsers(projectId);
+				removeAllGroups(projectId);
 				try {
 					save(getServerSpace());
 				} catch (final FatalESException e) {
@@ -339,27 +344,28 @@ public class ProjectSubInterfaceImpl extends AbstractSubEmfstoreInterface {
 		}
 	}
 
-	private void removeAllProjectAdmins(ProjectId projectId) {
+	private void removeAllUsers(ProjectId projectId) {
 		final List<ACUser> users = getServerSpace().getUsers();
-		for (final ACUser acUser : users) {
-			ProjectAdminRole obsoletePARole = null;
-			boolean paRoleIsObsolete = false;
-			for (final Role role : acUser.getRoles()) {
-				if (role.eClass().equals(RolesPackage.eINSTANCE.getProjectAdminRole())) {
-					final ProjectAdminRole paRole = ProjectAdminRole.class.cast(role);
-					final int indexOf = paRole.getProjects().indexOf(projectId);
-					if (indexOf != -1) {
-						paRole.getProjects().remove(indexOf);
-					}
-					if (paRole.getProjects().size() == 0) {
-						paRoleIsObsolete = true;
-						obsoletePARole = paRole;
-					}
+		removeAllRolesButServerAdmin(projectId, users);
+	}
+
+	private void removeAllGroups(ProjectId projectId) {
+		final List<ACGroup> groups = getServerSpace().getGroups();
+		removeAllRolesButServerAdmin(projectId, groups);
+	}
+
+	private void removeAllRolesButServerAdmin(ProjectId projectId,
+		List<? extends ACOrgUnit<? extends ESOrgUnit>> acUnits) {
+		for (final ACOrgUnit<? extends ESOrgUnit> acUnit : acUnits) {
+			final Set<Role> obsoleteRoles = new LinkedHashSet<Role>();
+			for (final Role role : acUnit.getRoles()) {
+				role.getProjects().remove(projectId);
+				if (!RolesPackage.Literals.SERVER_ADMIN.equals(role.eClass()) && role.getProjects().isEmpty()) {
+					// Except for server admin roles, empty roles do not provide any benefits and can be removed.
+					obsoleteRoles.add(role);
 				}
 			}
-			if (paRoleIsObsolete) {
-				acUser.getRoles().remove(obsoletePARole);
-			}
+			acUnit.getRoles().removeAll(obsoleteRoles);
 		}
 	}
 
