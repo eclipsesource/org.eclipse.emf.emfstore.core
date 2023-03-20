@@ -1,4 +1,4 @@
-name: CI
+name: CI-temurin
 
 on:
   push:
@@ -12,7 +12,7 @@ permissions:
 
 
 jobs:
-  build:
+  build-temurin:
     timeout-minutes: 60
 
     # Use 20.04 because it has gtk2 available to install
@@ -28,8 +28,7 @@ jobs:
       uses: actions/setup-java@v3
       with:
         java-version: '8'
-        # distribution: 'temurin'
-        distribution: 'adopt-hotspot'
+        distribution: 'temurin'
         cache: maven
     - name: Set up test files
       run: |

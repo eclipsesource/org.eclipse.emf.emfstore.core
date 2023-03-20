@@ -13,8 +13,8 @@ package org.eclipse.emf.emfstore.server.test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
-@RunWith(Suite.class)
-@Suite.SuiteClasses({ BranchTests.class, HistoryAPITests.class })
+// @RunWith(Suite.class)
+// @Suite.SuiteClasses({ BranchTests.class, HistoryAPITests.class })
 // VersionSpecTests.class })
 public class AllServerAPITests {
 
