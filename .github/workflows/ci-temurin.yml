@@ -72,9 +72,11 @@ jobs:
         sudo apt-get install -y libgtk2.0-0
     - name: Build with Maven
       uses: GabrielBB/xvfb-action@86d97bde4a65fe9b290c0b3fb92c2c4ed0e5302d
-      timeout-minutes: 120
+      timeout-minutes: 25
       with:
-       run: mvn clean verify -X -Dcheckstyle.skip -f releng/emfstore-parent --no-transfer-progress
+       run: |
+         metacity --replace --sm-disable &
+         mvn clean verify -X -Dcheckstyle.skip -f releng/emfstore-parent --no-transfer-progress
     - name: Archive test workspace logs
       if: always()
       uses: actions/upload-artifact@v3
