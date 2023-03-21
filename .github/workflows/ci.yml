@@ -55,10 +55,12 @@ jobs:
         emfstore.accesscontrol.session.timeout=1800000
         EOT
         cat $EMFSTORE_TEST_SERVER_ROOT_DIR/profiles/default_test/conf/es.properties
-    - name: Install and set up UI environment
+    - name: Install UI dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y libgtk2.0-0 metacity xvfb
+    - name: Configure virtual display
+      run: |
         sudo /usr/bin/Xvfb $DISPLAY -screen 0 1280x1024x24 &
         sudo metacity --replace --sm-disable &
     - name: Build and Test
@@ -69,7 +71,7 @@ jobs:
       with:
         name: p2-repository
         path: releng/org.eclipse.emf.emfstore.p2repository/target/repository/
-        retention-days: 7
+        retention-days: 3
     - name: Publish JUnit Test Report
       uses: mikepenz/action-junit-report@4fa23552acda20a6a1d44f16224a90efbeb6c5f1
       if: always()
