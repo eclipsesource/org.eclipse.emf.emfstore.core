@@ -65,16 +65,18 @@ jobs:
         sudo metacity --replace --sm-disable &
     - name: Build and Test
       run: mvn clean verify -Dcheckstyle.skip -P aggregateSites -f releng/emfstore-parent --no-transfer-progress
-      timeout-minutes: 30
+      timeout-minutes: 20
+    - name: Publish JUnit Test Report
+      uses: mikepenz/action-junit-report@4fa23552acda20a6a1d44f16224a90efbeb6c5f1
+      if: always()
+      with:
+        report_paths: '**/TEST-*.xml'
+        check_retries: true
+        detailed_summary: true
+        fail_on_failure: true
     - name: Archive P2 repository
       uses: actions/upload-artifact@v3
       with:
         name: p2-repository
         path: releng/org.eclipse.emf.emfstore.p2repository/target/repository/
         retention-days: 3
-    - name: Publish JUnit Test Report
-      uses: mikepenz/action-junit-report@4fa23552acda20a6a1d44f16224a90efbeb6c5f1
-      if: always()
-      with:
-        report_paths: '**/TEST-*.xml'
-        detailed_summary: true
