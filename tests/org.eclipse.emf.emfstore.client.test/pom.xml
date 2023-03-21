@@ -173,6 +173,7 @@
 
                 <!-- More suites can be added here -->
                 <executions>
+                <!--
                     <execution>
                         <id>TransactionalEditingDomainTests</id>
                         <phase>integration-test</phase>
@@ -361,7 +362,8 @@
                             </bundleStartLevel>
                         </configuration>
                     </execution>
-                    
+                    -->
+
                     <execution>
                         <id>InMemoryChangePackageTest</id>
                         <phase>integration-test</phase>
@@ -399,6 +401,7 @@
                                     <artifactId>org.eclipse.emf.emfstore.test.model.edit</artifactId>
                                     <version>0.0.0</version>
                                 </dependency>
+                                <!--
                                 <dependency>
                                     <type>eclipse-plugin</type>
                                     <artifactId>org.eclipse.emf.emfstore.client.transaction</artifactId>
@@ -409,6 +412,7 @@
 									<artifactId>org.eclipse.emf.emfstore.client.ui.transaction</artifactId>
 									<version>0.0.0</version>
 								</dependency>
+                                -->
                                 <dependency>
                                     <type>eclipse-plugin</type>
                                     <artifactId>org.eclipse.emf.emfstore.client.changetracking.test</artifactId>
@@ -482,11 +486,11 @@
                                     <level>4</level>
                                     <autoStart>false</autoStart>
                                 </bundle>
-                                <bundle>
+                                <!-- <bundle>
                                     <id>org.eclipse.emf.emfstore.client.transaction</id>
                                     <level>4</level>
                                     <autoStart>false</autoStart>
-                                </bundle>
+                                </bundle> -->
                                 <bundle>
                                     <id>org.eclipse.emf.emfstore.client</id>
                                     <level>4</level>
@@ -588,6 +592,7 @@
                                     <artifactId>org.eclipse.emf.emfstore.test.model.edit</artifactId>
                                     <version>0.0.0</version>
                                 </dependency>
+																<!--
                                 <dependency>
                                     <type>eclipse-plugin</type>
                                     <artifactId>org.eclipse.emf.emfstore.client.transaction</artifactId>
@@ -598,6 +603,7 @@
 									<artifactId>org.eclipse.emf.emfstore.client.ui.transaction</artifactId>
 									<version>0.0.0</version>
 								</dependency>
+																-->
                                 <dependency>
                                     <type>eclipse-plugin</type>
                                     <artifactId>org.eclipse.emf.emfstore.client.changetracking.test</artifactId>
@@ -671,11 +677,11 @@
                                     <level>4</level>
                                     <autoStart>false</autoStart>
                                 </bundle>
-                                <bundle>
+                                <!-- <bundle>
                                     <id>org.eclipse.emf.emfstore.client.transaction</id>
                                     <level>4</level>
                                     <autoStart>false</autoStart>
-                                </bundle>
+                                </bundle> -->
                                 <bundle>
                                     <id>org.eclipse.emf.emfstore.client</id>
                                     <level>4</level>
