@@ -12,14 +12,14 @@ permissions:
 
 
 jobs:
-  build-temurin:
+  build-metacity:
     timeout-minutes: 60
 
     # Use 20.04 because it has gtk2 available to install
     runs-on: ubuntu-20.04
 
     env:
-      # DISPLAY: :0
+      DISPLAY: :0
       EMFSTORE_TEST_SERVER_ROOT_DIR: ${{ github.workspace }}
 
     steps:
@@ -55,26 +55,34 @@ jobs:
         emfstore.accesscontrol.session.timeout=1800000
         EOT
         cat $EMFSTORE_TEST_SERVER_ROOT_DIR/profiles/default_test/conf/es.properties
-    # - name: Setup xvfb (Linux)
-    #   if: runner.os == 'Linux'
-    #   run: |
-    #     # install swt
-    #     sudo apt-get install -y libswt-gtk-4-java
-    #     sudo ls -la ~/.swt/lib/linux/x86_64
-    #     ls -la /home/runner/.swt/lib/linux/x86_64
-    #     sudo apt-get install -y xvfb libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xinput0 libxcb-xfixes0
-    #     # start xvfb in the background
-    #     sudo /usr/bin/Xvfb $DISPLAY -screen 0 1280x1024x24 &
-    #     #sudo metacity --replace --sm-disable &
     - name: Install GTK 2 for SWT and Metacity
       run: |
         sudo apt-get update
-        sudo apt-get install -y libgtk2.0-0 metacity
-    - name: Build with Maven
-      uses: GabrielBB/xvfb-action@86d97bde4a65fe9b290c0b3fb92c2c4ed0e5302d
-      timeout-minutes: 30
-      with:
-        run: metacity --replace --sm-disable &; mvn clean verify -X -Dcheckstyle.skip -f releng/emfstore-parent --no-transfer-progress
+        sudo apt-get install -y libgtk2.0-0 metacity xvfb
+    - name: Setup xvfb (Linux)
+      if: runner.os == 'Linux'
+      run: |
+        sudo /usr/bin/Xvfb $DISPLAY -screen 0 1280x1024x24 &
+        sudo metacity --replace --sm-disable &
+      # run: |
+      #   # install swt
+      #   sudo apt-get install -y libswt-gtk-4-java
+      #   sudo ls -la ~/.swt/lib/linux/x86_64
+      #   ls -la /home/runner/.swt/lib/linux/x86_64
+      #   sudo apt-get install -y xvfb libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xinput0 libxcb-xfixes0
+      #   # start xvfb in the background
+      #   sudo /usr/bin/Xvfb $DISPLAY -screen 0 1280x1024x24 &
+      #   #sudo metacity --replace --sm-disable &
+    # - name: Build with Maven
+    #   uses: GabrielBB/xvfb-action@86d97bde4a65fe9b290c0b3fb92c2c4ed0e5302d
+    #   timeout-minutes: 30
+    #   with:
+    #     run: |
+    #       metacity --replace --sm-disable &
+    #       mvn clean verify -X -Dcheckstyle.skip -f releng/emfstore-parent --no-transfer-progress
+    - name: Build and Test
+      run: mvn clean verify -X -Dcheckstyle.skip -f releng/emfstore-parent --no-transfer-progress
+      timeout-minutes: 40
     - name: Archive test workspace logs
       if: always()
       uses: actions/upload-artifact@v3
