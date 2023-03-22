@@ -80,7 +80,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: p2-repository
-        path: releng/org.eclipse.emf.emfstore.p2repository/target/repository/
+        path: releng/org.eclipse.emf.emfstore.p2repository/target/repository.zip
         retention-days: 1
 
   release:
@@ -98,12 +98,14 @@ jobs:
       uses: actions/download-artifact@v3
       with:
         name: p2-repository
+    - name: LS
+      run: ls -la ${{ steps.download.outputs.download-path }}
     - name: Release
       uses: softprops/action-gh-release@d4e8205d7e959a9107da6396278b2f1f07af0f9b # commit from Dec 9, 2022
       with:
         name: LTS - ${{ steps.sha.outputs.sha_short }}
         body: LTS release based on commit ${{ github.sha }}
         fail_on_unmatched_files: true
-        files: ${{ steps.download.outputs.download-path }}
+        files: ${{ steps.download.outputs.download-path }}/repository.zip
         target_commitish: ${{ github.sha }}
         tag_name: lts-${{ steps.sha.outputs.sha_short }}
