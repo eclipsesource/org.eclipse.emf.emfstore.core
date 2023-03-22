@@ -1,21 +1,13 @@
 name: LTS
 
 on:
-  # workflow_dispatch:
-  #   inputs:
-  #     release-name:
-  #       required: true
-  #       description: Name of the published release
-  pull_request:
-    branches: [ "main" ]
-
-permissions:
-  contents: read
-  checks: write
-
+  workflow_dispatch:
 
 jobs:
   build-and-test:
+    permissions:
+      contents: read
+      checks: write
     timeout-minutes: 60
 
     # Use 20.04 because it has gtk2 available to install
@@ -67,7 +59,7 @@ jobs:
         sudo /usr/bin/Xvfb $DISPLAY -screen 0 1280x1024x24 &
         sudo metacity --replace --sm-disable &
     - name: Build and Test
-      run: mvn clean verify -Dcheckstyle.skip -DskipTests -P aggregateSites -f releng/emfstore-parent --no-transfer-progress
+      run: mvn clean verify -Dcheckstyle.skip -P aggregateSites -f releng/emfstore-parent --no-transfer-progress
       timeout-minutes: 20
     - name: Publish JUnit Test Report
       uses: mikepenz/action-junit-report@4fa23552acda20a6a1d44f16224a90efbeb6c5f1
@@ -85,7 +77,6 @@ jobs:
 
   release:
     needs: build-and-test
-    # Use 20.04 because it has gtk2 available to install
     runs-on: ubuntu-20.04
     permissions:
       contents: write
@@ -99,10 +90,8 @@ jobs:
       uses: actions/download-artifact@v3
       with:
         name: p2-repository
-    - name: LS
-      run: ls -la ${{ steps.download.outputs.download-path }}
-    - name: Create tag
-      uses: actions/github-script@d556feaca394842dc55e4734bf3bb9f685482fa0
+    - name: Create release tag
+      uses: actions/github-script@v6
       with:
         script: |
           github.rest.git.createRef({
@@ -111,7 +100,7 @@ jobs:
               ref: 'refs/tags/lts-${{ steps.sha.outputs.sha_short }}',
               sha: context.sha
             })
-    - name: Release
+    - name: Create release
       uses: softprops/action-gh-release@d4e8205d7e959a9107da6396278b2f1f07af0f9b # commit from Dec 9, 2022
       with:
         name: LTS - ${{ steps.sha.outputs.sha_short }}
