@@ -76,6 +76,12 @@ jobs:
         report_paths: '**/TEST-*.xml'
         check_retries: true
         fail_on_failure: true
+    - name: Upload P2 repository
+      uses: actions/upload-artifact@v3
+      with:
+        name: p2-repository
+        path: releng/org.eclipse.emf.emfstore.p2repository/target/repository/
+        retention-days: 1
 
   release:
     needs: build-and-test
@@ -85,14 +91,19 @@ jobs:
       contents: write
     steps:
     - name: Set Git Short SHA
-      id: vars
+      id: sha
       run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+    - name: Download P2 repository
+      id: download
+      uses: actions/download-artifact@v3
+      with:
+        name: p2-repository
     - name: Release
       uses: softprops/action-gh-release@d4e8205d7e959a9107da6396278b2f1f07af0f9b # commit from Dec 9, 2022
       with:
-        name: LTS - ${{ steps.vars.outputs.sha_short }}
+        name: LTS - ${{ steps.sha.outputs.sha_short }}
         body: LTS release based on commit ${{ github.sha }}
         fail_on_unmatched_files: true
-        files: releng/org.eclipse.emf.emfstore.p2repository/target/repository.zip
+        files: ${{ steps.download.outputs.download-path }}
         target_commitish: ${{ github.sha }}
-        tag_name: lts-${{ steps.vars.outputs.sha_short }}
+        tag_name: lts-${{ steps.sha.outputs.sha_short }}
