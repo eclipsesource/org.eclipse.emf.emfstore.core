@@ -86,12 +86,12 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: p2-repository
-        path: releng/org.eclipse.emf.emfstore.p2repository/target/repository/
+        path: releng/org.eclipse.emf.emfstore.p2repository/target/repository.zip
         retention-days: 3
     - name: Archive P2 repository (Push)
       if: success() && github.event_name == 'push'
       uses: actions/upload-artifact@v3
       with:
         name: p2-repository
-        path: releng/org.eclipse.emf.emfstore.p2repository/target/repository/
+        path: releng/org.eclipse.emf.emfstore.p2repository/target/repository.zip
         retention-days: 14
