@@ -90,6 +90,7 @@ jobs:
     permissions:
       contents: write
     steps:
+    - uses: actions/checkout@v3
     - name: Set Git Short SHA
       id: sha
       run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
@@ -100,6 +101,16 @@ jobs:
         name: p2-repository
     - name: LS
       run: ls -la ${{ steps.download.outputs.download-path }}
+    - name: Create tag
+      uses: actions/github-script@d556feaca394842dc55e4734bf3bb9f685482fa0
+      with:
+        script: |
+          github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: 'refs/tags/lts-${{ steps.sha.outputs.sha_short }}',
+              sha: context.sha
+            })
     - name: Release
       uses: softprops/action-gh-release@d4e8205d7e959a9107da6396278b2f1f07af0f9b # commit from Dec 9, 2022
       with:
