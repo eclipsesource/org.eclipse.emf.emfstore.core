@@ -1,0 +1,111 @@
+name: LTS
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    permissions:
+      contents: read
+      checks: write
+    timeout-minutes: 60
+
+    # Use 20.04 because it has gtk2 available to install
+    runs-on: ubuntu-20.04
+
+    env:
+      DISPLAY: :0
+      EMFSTORE_TEST_SERVER_ROOT_DIR: ${{ github.workspace }}
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up JDK 8
+      uses: actions/setup-java@v3
+      with:
+        java-version: '8'
+        distribution: 'temurin'
+        cache: maven
+    - name: Set up test files
+      run: |
+        echo $EMFSTORE_TEST_SERVER_ROOT_DIR
+        mkdir -p $EMFSTORE_TEST_SERVER_ROOT_DIR/profiles/default_test/conf/
+        cat <<EOT >> $EMFSTORE_TEST_SERVER_ROOT_DIR/profiles/default_test/conf/es.properties
+        emfstore.startup.post.loadlistener=true
+        emfstore.keystore.certificate.type=SunX509
+        emfstore.accesscontrol.authentication.superuser.password.hash=f262c3daf9b9c8fd380bdf34a415ee01c38e423d956d4f9c732273cf51264783787415c3b6d8701f3416735a31b06b8330e0be0d17ae5361ef83de320f17ba84
+        emfstore.accesscontrol.authentication.superuser.password.salt=8a0InZ2yZMss65zHJrdhOXU6CqF8EeFncdv7V29ZO4qD565i5deWWXIi7aRkYwbY2BWamdOYQGqoZeZiJHZ0BH1mteMIhu3eIG5D2twfVQtjetvf8kiLOMwnYDsk4HPq
+        emfstore.keystore.alias=emfstoreServer
+        emfstore.accesscontrol.authentication.policy=spfv
+        emfstore.acceptedversions=any
+        emfstore.validation.level=7
+        emfstore.validation.exclude=
+        emfstore.connection.rmi.encryption=true
+        emfstore.startup.loadlistener=false
+        emfstore.keystore.cipher.algorithm=RSA
+        emfstore.keystore.password=123456
+        emfstore.connection.xmlrpc.port=8080
+        emfstore.validation=true
+        emfstore.persistence.version.projectstate.everyxversions=50
+        emfstore.accesscontrol.authentication.superuser=super
+        emfstore.accesscontrol.session.timeout=1800000
+        EOT
+        cat $EMFSTORE_TEST_SERVER_ROOT_DIR/profiles/default_test/conf/es.properties
+    - name: Install UI dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libgtk2.0-0 metacity xvfb
+    - name: Configure virtual display
+      run: |
+        sudo /usr/bin/Xvfb $DISPLAY -screen 0 1280x1024x24 &
+        sudo metacity --replace --sm-disable &
+    - name: Build and Test
+      run: mvn clean verify -Dcheckstyle.skip -P aggregateSites -f releng/emfstore-parent --no-transfer-progress
+      timeout-minutes: 20
+    - name: Publish JUnit Test Report
+      uses: mikepenz/action-junit-report@4fa23552acda20a6a1d44f16224a90efbeb6c5f1
+      if: always()
+      with:
+        report_paths: '**/TEST-*.xml'
+        check_retries: true
+        fail_on_failure: true
+    - name: Upload P2 repository
+      uses: actions/upload-artifact@v3
+      with:
+        name: p2-repository
+        path: releng/org.eclipse.emf.emfstore.p2repository/target/repository.zip
+        retention-days: 1
+
+  release:
+    needs: build-and-test
+    runs-on: ubuntu-20.04
+    permissions:
+      contents: write
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set Git Short SHA
+      id: sha
+      run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+    - name: Download P2 repository
+      id: download
+      uses: actions/download-artifact@v3
+      with:
+        name: p2-repository
+    - name: Create release tag
+      uses: actions/github-script@v6
+      with:
+        script: |
+          github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: 'refs/tags/lts-${{ steps.sha.outputs.sha_short }}',
+              sha: context.sha
+            })
+    - name: Create release
+      uses: softprops/action-gh-release@d4e8205d7e959a9107da6396278b2f1f07af0f9b # commit from Dec 9, 2022
+      with:
+        name: LTS - ${{ steps.sha.outputs.sha_short }}
+        body: LTS release based on commit ${{ github.sha }}
+        fail_on_unmatched_files: true
+        files: ${{ steps.download.outputs.download-path }}/repository.zip
+        target_commitish: ${{ github.sha }}
+        tag_name: lts-${{ steps.sha.outputs.sha_short }}

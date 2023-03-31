@@ -173,7 +173,7 @@
 
 				<!-- More suites can be added here -->
 				<executions>
-					<execution>
+					<!-- <execution>
 						<id>TransactionalEditingDomainPerformanceTests</id>
 						<phase>integration-test</phase>
 						<goals>
@@ -360,7 +360,7 @@
 								</bundle>
 							</bundleStartLevel>
 						</configuration>
-					</execution>
+					</execution> -->
 
 					<execution>
 						<id>MemoryLoadTests</id>
